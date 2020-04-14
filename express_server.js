@@ -35,9 +35,18 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+});
+
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  // shortURL-longURL key-value pair are saved to the urlDatabase
+  // responds with a redirection to /urls/:shortURL created
+  const createdShortURL = generateRandomString(req.body.longURL);
+  urlDatabase[createdShortURL] = req.body.longURL;
+  res.redirect("/urls/"+createdShortURL);        
 });
 
 //Other routes
