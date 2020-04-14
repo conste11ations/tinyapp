@@ -11,6 +11,7 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+///////////// GET ///////////////
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -39,6 +40,7 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
+////////////// POST ////////////////
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
@@ -46,7 +48,14 @@ app.post("/urls", (req, res) => {
   // responds with a redirection to /urls/:shortURL created
   const createdShortURL = generateRandomString(req.body.longURL);
   urlDatabase[createdShortURL] = req.body.longURL;
-  res.redirect("/urls/"+createdShortURL);        
+  res.redirect("/urls/" + createdShortURL);        
+});
+
+// Sorry, i ddin't like the inconsistency of using /urls/:id in the instructions
+app.post("/urls/:shortURL", (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  console.log(urlDatabase);
+  res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -55,19 +64,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-//Other tester routes
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
-});
-
-app.get("/fetch", (req, res) => {
-  res.send(`a = ${a}`);
-});
+/////////////// END ///////////////////////////
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
