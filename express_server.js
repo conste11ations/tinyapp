@@ -49,7 +49,13 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls/"+createdShortURL);        
 });
 
-//Other routes
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL];
+  console.log(urlDatabase);
+  res.redirect("/urls");
+});
+
+//Other tester routes
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
