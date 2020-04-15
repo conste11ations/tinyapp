@@ -5,7 +5,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const urlDatabase = {
@@ -13,13 +13,31 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
+
 ////////////////////////////// GET //////////////////////////////
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+app.get("/register", (req, res) => {
+  let templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  res.render("register", templateVars);
+});
+
 app.get("/urls", (req, res) => {
-  let templateVars = {  username: req.cookies["username"], urls: urlDatabase };
+  let templateVars = { username: req.cookies["username"], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
@@ -30,12 +48,12 @@ app.get("/urls.json", (req, res) => {
 //order matters! below must be defined before :shortURL otherwise 
 //Express will think 'new' is a route param
 app.get("/urls/new", (req, res) => {
-  let templateVars = {  username: req.cookies["username"]};
+  let templateVars = { username: req.cookies["username"] };
   res.render("urls_new", templateVars);
-})
+});
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {  username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
@@ -44,6 +62,10 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 ////////////////////////// POST ////////////////////////////////
+
+app.post("/register", (req, res) => {
+  console.log(req.body);
+});
 
 app.post("/login", (req, res) => {
   console.log(req.body);
@@ -55,7 +77,7 @@ app.post("/logout", (req, res) => {
   console.log("logout!");
   res.clearCookie('username');
   res.redirect("/urls");
-})
+});
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
@@ -63,7 +85,7 @@ app.post("/urls", (req, res) => {
   // responds with a redirection to /urls/:shortURL created
   const createdShortURL = generateRandomString(req.body.longURL);
   urlDatabase[createdShortURL] = req.body.longURL;
-  res.redirect("/urls/" + createdShortURL);        
+  res.redirect("/urls/" + createdShortURL);
 });
 
 // Sorry, i ddin't like the inconsistency of using /urls/:id in the instructions
@@ -88,15 +110,15 @@ app.listen(PORT, () => {
 // functions
 function generateRandomString(input) {
   // Importing 'crypto' module 
-  const crypto = require('crypto'), 
+  const crypto = require('crypto'),
 
-  // Returns the names of supported hash algorithms  
-  // such as SHA1,MD5 
-  hash = crypto.getHashes(); 
+    // Returns the names of supported hash algorithms  
+    // such as SHA1,MD5 
+    hash = crypto.getHashes();
 
   // 'digest' is the output of hash function containing  
   // only hexadecimal digits 
-  hashPwd = crypto.createHash('SHA1').update(input).digest('hex'); 
+  hashPwd = crypto.createHash('SHA1').update(input).digest('hex');
   // truncate to only 6 alphanumeric string per instructions
   return hashPwd.slice(0, 6);
 
