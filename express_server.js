@@ -65,6 +65,20 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/register", (req, res) => {
   console.log(req.body);
+   const createdID = generateRandomString(req.body.fullname);
+   console.log(createdID);
+   const uniqueUserID = Object.keys(users).length + createdID;
+   users[uniqueUserID] = {
+     id: uniqueUserID,
+     email: req.body.email,
+     password: req.body.password
+   };
+   res.cookie("username", uniqueUserID);
+
+  console.log(uniqueUserID);
+//  console.log(req.body.fullname);
+console.log(users);
+  res.redirect("/urls");
 });
 
 app.post("/login", (req, res) => {

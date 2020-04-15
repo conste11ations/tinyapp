@@ -12,6 +12,7 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
       <div class="float-right">
+        <!-- If user it not logged in -->
         <% if (!username) { %>
         <form class="form-inline" action="/login" method="POST">
           <label class="sr-only" for="inlineFormInputName1">Name</label>
@@ -19,6 +20,7 @@
             placeholder="username">
           <button type="submit" class="btn btn-light mb-2">Login</button>
         </form>
+        <!-- if user is logged in, show logout functionality -->
         <% } else { %>
         <form class="form-inline" action="/logout" method="POST">
           <label for="inlineFormInputName2">Logged in as: <%= username %> </label>
