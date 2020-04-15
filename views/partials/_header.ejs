@@ -13,12 +13,13 @@
       <div class="float-right">
         <% if (!username) { %>
         <form class="form-inline" action="/login" method="POST">
-          <label class="sr-only" for="inlineFormInputName2">Name</label>
+          <label class="sr-only" for="inlineFormInputName1">Name</label>
           <input type="text" class="form-control mb-2 mr-sm-2" name="username" id="inlineFormInputName2" placeholder="username" >      
           <button type="submit" class="btn btn-light mb-2">Login</button>
         </form>
           <% } else { %> 
             <form class="form-inline" action="/logout" method="POST">
+            <label for="inlineFormInputName2">Logged in as: <%= username %> </label>
             <button type="submit" class="btn btn-light mb-2">Logout</button>
           </form>
             <% } %>
