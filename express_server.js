@@ -13,7 +13,7 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-///////////// GET ///////////////
+////////////////////////////// GET //////////////////////////////
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -42,7 +42,7 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
-////////////// POST ////////////////
+////////////////////////// POST ////////////////////////////////
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
@@ -66,7 +66,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-/////////////// END ///////////////////////////
+/////////////////////////// END /////////////////////////////////
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
