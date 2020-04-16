@@ -10,21 +10,22 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-      </div>
-      <div class="float-right">
         <!-- If user it not logged in -->
         <% if (!user) { %>
-        <form class="form-inline" action="/login" method="POST">
-          <label class="sr-only" for="inlineFormInputName1">Name</label>
-          <input type="text" class="form-control mb-2 mr-sm-2" name="user_id" id="inlineFormInputName2"
-            placeholder="user email">
-          <button type="submit" class="btn btn-light mb-2">Login</button>
+        <form class="form-inline" action="/login" method="GET">
+          <!-- <label class="sr-only" for="inlineFormInputName1">Name</label>
+            <input type="text" class="form-control mb-2 mr-sm-2" name="user_id" id="inlineFormInputName2"
+              placeholder="user email"> -->
+          <button type="submit" class="btn btn-light my-2 my-sm-0">Login</button>
+        </form>
+        <form class="form-inline" action="/register" method="GET">
+          <button type="submit" class="btn btn-light my-2 my-sm-0">Register</button>
         </form>
         <!-- if user is logged in, show logout functionality -->
         <% } else { %>
         <form class="form-inline" action="/logout" method="POST">
           <label for="inlineFormInputName2">Logged in as: <%= user.email %> </label>
-          <button type="submit" class="btn btn-light mb-2">Logout</button>
+          <button type="submit" class="btn btn-light my-2 my-sm-0">Logout</button>
         </form>
         <% } %>
       </div>

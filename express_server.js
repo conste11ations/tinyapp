@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -17,18 +17,23 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "purp"
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "dish"
   }
 };
 
 ////////////////////////////// GET //////////////////////////////
 app.get("/", (req, res) => {
   res.send("Hello!");
+});
+
+app.get("/login", (req, res) => {
+  let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
+  res.render("login", templateVars);
 });
 
 app.get("/register", (req, res) => {
@@ -47,7 +52,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//order matters! below must be defined before :shortURL otherwise 
+//order matters! below must be defined before :shortURL otherwise
 //Express will think 'new' is a route param
 app.get("/urls/new", (req, res) => {
   let templateVars = { user: users[req.cookies["user_id"]] };
@@ -67,15 +72,12 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/register", (req, res) => {
   console.log(req.body);
-
-
-  if (req.body.email === ""  || req.body.password === "") {
+  if (req.body.email === "" || req.body.password === "") {
     res.status(400).send("400 Either email or password empty");
   } else if (existingEmailChecker(req.body.email)) {
     res.status(400).send("400 Email already exists");
   } else {
-    const createdID = generateRandomString(req.body.fullname);
-    const uniqueUserID = Object.keys(users).length + createdID;
+    const uniqueUserID = Object.keys(users).length + generateRandomString(req.body.fullname);
     users[uniqueUserID] = {
       id: uniqueUserID,
       email: req.body.email,
@@ -87,13 +89,17 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  //  console.log(req.body);
-  console.log(users[req.body.user_id]);
-  if (users[req.body.user_id]) {
-    res.cookie("user_id", req.body.user_id);
-    res.redirect("/urls");
+  console.log(req.body);
+  console.log(userRetriever(req.body.email));
+  if (existingEmailChecker(req.body.email)) {
+    if (userRetriever(req.body.email).password === req.body.password) { // compare passwords
+      res.cookie("user_id", userRetriever(req.body.email).id);
+      res.redirect("/urls");
+    } else { 
+      res.status(403).send("403 Password incorrect");
+    }
   } else {
-    res.redirect("/register");
+    res.status(403).send("403 User with that email not found");
   }
 });
 
@@ -133,15 +139,15 @@ app.listen(PORT, () => {
 
 // functions
 function generateRandomString(input) {
-  // Importing 'crypto' module 
+  // Importing 'crypto' module
   const crypto = require('crypto'),
 
-    // Returns the names of supported hash algorithms  
-    // such as SHA1,MD5 
+    // Returns the names of supported hash algorithms
+    // such as SHA1,MD5
     hash = crypto.getHashes();
 
-  // 'digest' is the output of hash function containing  
-  // only hexadecimal digits 
+  // 'digest' is the output of hash function containing
+  // only hexadecimal digits
   hashPwd = crypto.createHash('SHA1').update(input).digest('hex');
   // truncate to only 6 alphanumeric string per instructions
   return hashPwd.slice(0, 6);
@@ -150,6 +156,13 @@ function generateRandomString(input) {
 function existingEmailChecker(email) {
   for (let [key, value] of Object.entries(users)) {
     if (email === value.email) return true;
+  }
+  return false;
+}
+
+function userRetriever(email) {
+  for (let [key, value] of Object.entries(users)) {
+    if (email === value.email) return value;
   }
   return false;
 }
