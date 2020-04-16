@@ -32,12 +32,14 @@ app.get("/", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
   res.render("register", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { username: req.cookies["username"], urls: urlDatabase };
+ // let users1 = users[req.cookies["user_id"]];
+  let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
+  console.log(req.cookies);
   res.render("urls_index", templateVars);
 });
 
@@ -48,12 +50,12 @@ app.get("/urls.json", (req, res) => {
 //order matters! below must be defined before :shortURL otherwise 
 //Express will think 'new' is a route param
 app.get("/urls/new", (req, res) => {
-  let templateVars = { username: req.cookies["username"] };
+  let templateVars = { user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
@@ -73,7 +75,7 @@ app.post("/register", (req, res) => {
      email: req.body.email,
      password: req.body.password
    };
-   res.cookie("username", uniqueUserID);
+   res.cookie("user_id", uniqueUserID);
 
   console.log(uniqueUserID);
 //  console.log(req.body.fullname);
@@ -82,14 +84,19 @@ console.log(users);
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body);
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
+//  console.log(req.body);
+  console.log(users[req.body.user_id]);
+  if (users[req.body.user_id]) {
+    res.cookie("user_id", req.body.user_id);
+    res.redirect("/urls");
+  } else {
+    res.redirect("/register");
+  }
 });
 
 app.post("/logout", (req, res) => {
   console.log("logout!");
-  res.clearCookie('username');
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 

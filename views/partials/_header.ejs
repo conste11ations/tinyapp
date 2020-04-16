@@ -13,17 +13,17 @@
       </div>
       <div class="float-right">
         <!-- If user it not logged in -->
-        <% if (!username) { %>
+        <% if (!user) { %>
         <form class="form-inline" action="/login" method="POST">
           <label class="sr-only" for="inlineFormInputName1">Name</label>
-          <input type="text" class="form-control mb-2 mr-sm-2" name="username" id="inlineFormInputName2"
-            placeholder="username">
+          <input type="text" class="form-control mb-2 mr-sm-2" name="user_id" id="inlineFormInputName2"
+            placeholder="user email">
           <button type="submit" class="btn btn-light mb-2">Login</button>
         </form>
         <!-- if user is logged in, show logout functionality -->
         <% } else { %>
         <form class="form-inline" action="/logout" method="POST">
-          <label for="inlineFormInputName2">Logged in as: <%= username %> </label>
+          <label for="inlineFormInputName2">Logged in as: <%= user.email %> </label>
           <button type="submit" class="btn btn-light mb-2">Logout</button>
         </form>
         <% } %>
