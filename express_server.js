@@ -10,7 +10,8 @@ app.use(cookieParser());
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
-  "9sm5xK": { longURL: "http://www.google.com", userID: "user2RandomID" }
+  "9sm5xK": { longURL: "http://www.google.com", userID: "userRandomID" },
+  "55abc2": { longURL: "http://www.stackoverflow.com", userID: "user2RandomID" }
 };
 
 const users = {
@@ -23,6 +24,11 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dish"
+  },
+  "user3RandomID": {
+    id: "user3RandomID",
+    email: "user3@example.com",
+    password: "soap"
   }
 };
 
@@ -42,10 +48,13 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  // let users1 = users[req.cookies["user_id"]];
-  let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
-  console.log(req.cookies);
-  res.render("urls_index", templateVars);
+  if (users[req.cookies["user_id"]]) {
+    let activeUser = users[req.cookies["user_id"]];
+    let templateVars = { user: activeUser, urls: urlsForUser(activeUser.id) };
+    res.render("urls_index", templateVars);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -64,9 +73,20 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  let activeUser = users[req.cookies["user_id"]];
+  if (!activeUser) {
+    res.send("Please log in!");
+  } else if (urlDatabase[req.params.shortURL].userID === activeUser.id) {
+  let templateVars = { 
+    user: activeUser, 
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL].longURL 
+  };
   console.log(templateVars);
   res.render("urls_show", templateVars);
+  } else {
+    res.send("this is not your URL");
+  }
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -101,7 +121,7 @@ app.post("/login", (req, res) => {
     if (userRetriever(req.body.email).password === req.body.password) { // compare passwords
       res.cookie("user_id", userRetriever(req.body.email).id);
       res.redirect("/urls");
-    } else { 
+    } else {
       res.status(403).send("403 Password incorrect");
     }
   } else {
@@ -119,24 +139,36 @@ app.post("/urls", (req, res) => {
   console.log("body", req.body);  // Log the POST request body to the console
   // shortURL-longURL key-value pair are saved to the urlDatabase
   // responds with a redirection to /urls/:shortURL created
-  const createdShortURL = generateRandomString(req.body.longURL);
+  if (users[req.cookies["user_id"]]) {
+    const createdShortURL = generateRandomString(req.body.longURL);
+    urlDatabase[createdShortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+    console.log(urlDatabase);
+    res.redirect("/urls/" + createdShortURL);
+  } else {
 
-  urlDatabase[createdShortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
-  console.log(urlDatabase);
-  res.redirect("/urls/" + createdShortURL);
+  }
 });
 
 // Sorry, i ddin't like the inconsistency of using /urls/:id in the instructions
 app.post("/urls/:shortURL", (req, res) => {
-  urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
-  console.log(urlDatabase);
-  res.redirect("/urls");
+  if (users[req.cookies["user_id"]]) {
+    urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+    console.log(urlDatabase);
+    res.redirect("/urls");
+  } else {
+    console.log("Please log in!");
+  }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  console.log(urlDatabase);
-  res.redirect("/urls");
+  let activeUser = users[req.cookies["user_id"]];
+  if (activeUser && (urlDatabase[req.params.shortURL].userID === activeUser.id)) {
+    delete urlDatabase[req.params.shortURL];
+    console.log(urlDatabase);
+    res.redirect("/urls");
+  } else {
+    res.send("Unauthorized!");
+  }
 });
 
 /////////////////////////// END /////////////////////////////////
@@ -173,4 +205,14 @@ function userRetriever(email) {
     if (email === value.email) return value;
   }
   return false;
+}
+
+function urlsForUser(id) {
+  let filteredURLs = {};
+  for (let shortURL in urlDatabase) {
+    if (id === urlDatabase[shortURL].userID) {
+      filteredURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return filteredURLs;
 }
