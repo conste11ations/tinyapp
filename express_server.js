@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -18,17 +19,17 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purp"
+    password: "$2b$10$3vf6wuMM1q8ay2.BXcwapuyyGYXodFfE0N8ftkwiip0qgpzmNQujW"
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dish"
+    password: "$2b$10$GWYu..2/7SqTHOb4wty/QuHyqYNbDyI4/Gl0HcbmpxKTo.XzhzSkW"
   },
   "user3RandomID": {
     id: "user3RandomID",
     email: "user3@example.com",
-    password: "soap"
+    password: "$2b$10$aPKr/5TRHr1IyUoA81QZh.b.HDHRHheluqgqM3iMOruRMOBQHU.YK"
   }
 };
 
@@ -77,13 +78,13 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!activeUser) {
     res.send("Please log in!");
   } else if (urlDatabase[req.params.shortURL].userID === activeUser.id) {
-  let templateVars = { 
-    user: activeUser, 
-    shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL].longURL 
-  };
-  console.log(templateVars);
-  res.render("urls_show", templateVars);
+    let templateVars = {
+      user: activeUser,
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL
+    };
+    console.log(templateVars);
+    res.render("urls_show", templateVars);
   } else {
     res.send("this is not your URL");
   }
@@ -97,7 +98,6 @@ app.get("/u/:shortURL", (req, res) => {
 ////////////////////////// POST ////////////////////////////////
 
 app.post("/register", (req, res) => {
-  console.log(req.body);
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).send("400 Either email or password empty");
   } else if (existingEmailChecker(req.body.email)) {
@@ -107,7 +107,7 @@ app.post("/register", (req, res) => {
     users[uniqueUserID] = {
       id: uniqueUserID,
       email: req.body.email,
-      password: req.body.password
+      password: bcrypt.hashSync(req.body.password, 10)
     };
     res.cookie("user_id", uniqueUserID);
     res.redirect("/urls");
@@ -115,10 +115,9 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body);
-  console.log(userRetriever(req.body.email));
   if (existingEmailChecker(req.body.email)) {
-    if (userRetriever(req.body.email).password === req.body.password) { // compare passwords
+//    if (userRetriever(req.body.email).password === req.body.password) { // compare passwords
+    if (bcrypt.compareSync(req.body.password, userRetriever(req.body.email).password)) {
       res.cookie("user_id", userRetriever(req.body.email).id);
       res.redirect("/urls");
     } else {
