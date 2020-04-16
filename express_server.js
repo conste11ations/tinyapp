@@ -13,15 +13,15 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const users = { 
+const users = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
 };
@@ -37,7 +37,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
- // let users1 = users[req.cookies["user_id"]];
+  // let users1 = users[req.cookies["user_id"]];
   let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
   console.log(req.cookies);
   res.render("urls_index", templateVars);
@@ -67,24 +67,27 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/register", (req, res) => {
   console.log(req.body);
-   const createdID = generateRandomString(req.body.fullname);
-   console.log(createdID);
-   const uniqueUserID = Object.keys(users).length + createdID;
-   users[uniqueUserID] = {
-     id: uniqueUserID,
-     email: req.body.email,
-     password: req.body.password
-   };
-   res.cookie("user_id", uniqueUserID);
 
-  console.log(uniqueUserID);
-//  console.log(req.body.fullname);
-console.log(users);
-  res.redirect("/urls");
+
+  if (req.body.email === ""  || req.body.password === "") {
+    res.status(400).send("400 Either email or password empty");
+  } else if (existingEmailChecker(req.body.email)) {
+    res.status(400).send("400 Email already exists");
+  } else {
+    const createdID = generateRandomString(req.body.fullname);
+    const uniqueUserID = Object.keys(users).length + createdID;
+    users[uniqueUserID] = {
+      id: uniqueUserID,
+      email: req.body.email,
+      password: req.body.password
+    };
+    res.cookie("user_id", uniqueUserID);
+    res.redirect("/urls");
+  }
 });
 
 app.post("/login", (req, res) => {
-//  console.log(req.body);
+  //  console.log(req.body);
   console.log(users[req.body.user_id]);
   if (users[req.body.user_id]) {
     res.cookie("user_id", req.body.user_id);
@@ -142,5 +145,11 @@ function generateRandomString(input) {
   hashPwd = crypto.createHash('SHA1').update(input).digest('hex');
   // truncate to only 6 alphanumeric string per instructions
   return hashPwd.slice(0, 6);
+}
 
+function existingEmailChecker(email) {
+  for (let [key, value] of Object.entries(users)) {
+    if (email === value.email) return true;
+  }
+  return false;
 }
