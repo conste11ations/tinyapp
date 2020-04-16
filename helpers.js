@@ -6,7 +6,7 @@ function existingEmailChecker(email, database) {
 }
 
 // this is the getUserByEmail function
-function userRetriever(email, database) {
+function getUserByEmail(email, database) {
   for (let [key, value] of Object.entries(database)) {
     if (email === value.email) return value;
   }
@@ -40,7 +40,7 @@ function generateRandomString(input) {
 
 module.exports = {
   existingEmailChecker,
-  userRetriever,
+  getUserByEmail,
   urlsForUser, 
   generateRandomString
 };

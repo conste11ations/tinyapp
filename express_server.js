@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
-const { existingEmailChecker, userRetriever, urlsForUser, generateRandomString } = require("./helpers");
+const { existingEmailChecker, getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -125,8 +125,8 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   if (existingEmailChecker(req.body.email, users)) {
-    if (bcrypt.compareSync(req.body.password, userRetriever(req.body.email, users).password)) {
-      req.session.user_id = userRetriever(req.body.email, users).id;
+    if (bcrypt.compareSync(req.body.password, getUserByEmail(req.body.email, users).password)) {
+      req.session.user_id = getUserByEmail(req.body.email, users).id;
 
       res.redirect("/urls");
     } else {
