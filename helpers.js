@@ -23,8 +23,24 @@ function urlsForUser(id, database) {
   return filteredURLs;
 }
 
+function generateRandomString(input) {
+  // Importing 'crypto' module
+  const crypto = require('crypto'),
+
+    // Returns the names of supported hash algorithms
+    // such as SHA1,MD5
+    hash = crypto.getHashes();
+
+  // 'digest' is the output of hash function containing
+  // only hexadecimal digits
+  hashPwd = crypto.createHash('SHA1').update(input).digest('hex');
+  // truncate to only 6 alphanumeric string per instructions
+  return hashPwd.slice(0, 6);
+}
+
 module.exports = {
   existingEmailChecker,
   userRetriever,
-  urlsForUser
+  urlsForUser, 
+  generateRandomString
 };

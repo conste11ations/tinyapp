@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
-const { existingEmailChecker, userRetriever, urlsForUser } = require("./helpers");
+const { existingEmailChecker, userRetriever, urlsForUser, generateRandomString } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -178,25 +178,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.send("Unauthorized!");
   }
 });
-
 /////////////////////////// END /////////////////////////////////
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-// functions
-function generateRandomString(input) {
-  // Importing 'crypto' module
-  const crypto = require('crypto'),
-
-    // Returns the names of supported hash algorithms
-    // such as SHA1,MD5
-    hash = crypto.getHashes();
-
-  // 'digest' is the output of hash function containing
-  // only hexadecimal digits
-  hashPwd = crypto.createHash('SHA1').update(input).digest('hex');
-  // truncate to only 6 alphanumeric string per instructions
-  return hashPwd.slice(0, 6);
-}
