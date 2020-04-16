@@ -9,8 +9,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "user2RandomID" }
 };
 
 const users = {
@@ -55,17 +55,23 @@ app.get("/urls.json", (req, res) => {
 //order matters! below must be defined before :shortURL otherwise
 //Express will think 'new' is a route param
 app.get("/urls/new", (req, res) => {
-  let templateVars = { user: users[req.cookies["user_id"]] };
-  res.render("urls_new", templateVars);
+  if (users[req.cookies["user_id"]]) {
+    let templateVars = { user: users[req.cookies["user_id"]] };
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  console.log(templateVars);
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  console.log(longURL);
   res.redirect(longURL);
 });
 ////////////////////////// POST ////////////////////////////////
@@ -110,17 +116,19 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
+  console.log("body", req.body);  // Log the POST request body to the console
   // shortURL-longURL key-value pair are saved to the urlDatabase
   // responds with a redirection to /urls/:shortURL created
   const createdShortURL = generateRandomString(req.body.longURL);
-  urlDatabase[createdShortURL] = req.body.longURL;
+
+  urlDatabase[createdShortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+  console.log(urlDatabase);
   res.redirect("/urls/" + createdShortURL);
 });
 
 // Sorry, i ddin't like the inconsistency of using /urls/:id in the instructions
 app.post("/urls/:shortURL", (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL;
+  urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
   console.log(urlDatabase);
   res.redirect("/urls");
 });
