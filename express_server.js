@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
+const { existingEmailChecker, userRetriever, urlsForUser } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -46,24 +47,20 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  // let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
   let templateVars = { user: users[req.session.user_id], urls: urlDatabase };
   res.render("login", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  // let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
   let templateVars = { user: users[req.session.user_id], urls: urlDatabase };
   res.render("register", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  // if (users[req.cookies["user_id"]]) {
-  //   let activeUser = users[req.cookies["user_id"]];
     if (users[req.session.user_id]) {
       let activeUser = users[req.session.user_id];
       console.log("activeUser", activeUser);
-    let templateVars = { user: activeUser, urls: urlsForUser(activeUser.id) };
+    let templateVars = { user: activeUser, urls: urlsForUser(activeUser.id, urlDatabase) };
     res.render("urls_index", templateVars);
   } else {
     res.redirect("/login");
@@ -77,8 +74,6 @@ app.get("/urls.json", (req, res) => {
 //order matters! below must be defined before :shortURL otherwise
 //Express will think 'new' is a route param
 app.get("/urls/new", (req, res) => {
-  // if (users[req.cookies["user_id"]]) {
-  //   let templateVars = { user: users[req.cookies["user_id"]] };
     if (users[req.session.user_id]) {
     let templateVars = { user: users[req.session.user_id] };
     res.render("urls_new", templateVars);
@@ -88,7 +83,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  // let activeUser = users[req.cookies["user_id"]];
   let activeUser = users[req.session.user_id];
   if (!activeUser) {
     res.send("Please log in!");
@@ -115,7 +109,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).send("400 Either email or password empty");
-  } else if (existingEmailChecker(req.body.email)) {
+  } else if (existingEmailChecker(req.body.email, users)) {
     res.status(400).send("400 Email already exists");
   } else {
     const uniqueUserID = Object.keys(users).length + generateRandomString(req.body.fullname);
@@ -124,18 +118,15 @@ app.post("/register", (req, res) => {
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 10)
     };
-  //  res.cookie("user_id", uniqueUserID);
     req.session.user_id = uniqueUserID;
     res.redirect("/urls");
   }
 });
 
 app.post("/login", (req, res) => {
-  if (existingEmailChecker(req.body.email)) {
-//    if (userRetriever(req.body.email).password === req.body.password) { // compare passwords
-    if (bcrypt.compareSync(req.body.password, userRetriever(req.body.email).password)) {
-      // res.cookie("user_id", userRetriever(req.body.email).id);
-      req.session.user_id = userRetriever(req.body.email).id;
+  if (existingEmailChecker(req.body.email, users)) {
+    if (bcrypt.compareSync(req.body.password, userRetriever(req.body.email, users).password)) {
+      req.session.user_id = userRetriever(req.body.email, users).id;
 
       res.redirect("/urls");
     } else {
@@ -208,30 +199,4 @@ function generateRandomString(input) {
   hashPwd = crypto.createHash('SHA1').update(input).digest('hex');
   // truncate to only 6 alphanumeric string per instructions
   return hashPwd.slice(0, 6);
-}
-
-function existingEmailChecker(email) {
-  for (let [key, value] of Object.entries(users)) {
-    if (email === value.email) return true;
-  }
-  return false;
-}
-
-function userRetriever(email) {
-  for (let [key, value] of Object.entries(users)) {
-    if (email === value.email) return value;
-  }
-  return false;
-}
-
-function urlsForUser(id) {
-  let filteredURLs = {};
-  for (let shortURL in urlDatabase) {
-    if (id === urlDatabase[shortURL].userID) {
-      filteredURLs[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  console.log("id", id);
-  console.log(filteredURLs);
-  return filteredURLs;
 }
