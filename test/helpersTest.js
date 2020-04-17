@@ -23,12 +23,14 @@ const testUrlDatabase = {
 };
 
 describe('#getUserByEmail', function () {
+
   it('should return the right user given a valid email', function () {
     const user = getUserByEmail("user@example.com", testUsers)
     const expectedOutput = "userRandomID";
     expect(user).to.deep.equal(testUsers["userRandomID"]);
     //    expect(user).to.have.property('email').equal("user@example.com");
   });
+
   it('should return a user object', () => {
     const user = getUserByEmail("user@example.com", testUsers)
     assert.typeOf(user, 'object');
@@ -36,11 +38,10 @@ describe('#getUserByEmail', function () {
 });
 
 describe('#urlsForUser', function () {
+  
   it('should return the right url object(s) given a user id', function () {
-
     const urls = urlsForUser("test1", testUrlDatabase)
     expect(urls).to.have.property('a123');
     urls.should.have.property('c369');
-
   });
 })

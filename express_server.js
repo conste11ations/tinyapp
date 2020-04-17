@@ -1,7 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
-var cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const { existingEmailChecker, getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 const app = express();
@@ -9,13 +8,11 @@ const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
   keys: ['AES'],
-  // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+}));
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
@@ -43,27 +40,41 @@ const users = {
 
 ////////////////////////////// GET //////////////////////////////
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (users[req.session.user_id]) {
+    let templateVars = { user: users[req.session.user_id], urls: urlDatabase };
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/login", (req, res) => {
   let templateVars = { user: users[req.session.user_id], urls: urlDatabase };
-  res.render("login", templateVars);
+  if (templateVars.user) {
+    res.redirect("/urls");
+  } else {
+    res.render("login", templateVars);
+  }
 });
 
 app.get("/register", (req, res) => {
   let templateVars = { user: users[req.session.user_id], urls: urlDatabase };
-  res.render("register", templateVars);
+  if (templateVars.user) {
+    res.redirect("/urls");
+  } else {
+    res.render("register", templateVars);
+  }
 });
 
 app.get("/urls", (req, res) => {
-    if (users[req.session.user_id]) {
-      let activeUser = users[req.session.user_id];
-      console.log("activeUser", activeUser);
+  if (users[req.session.user_id]) {
+    let activeUser = users[req.session.user_id];
     let templateVars = { user: activeUser, urls: urlsForUser(activeUser.id, urlDatabase) };
     res.render("urls_index", templateVars);
   } else {
     res.redirect("/login");
+//  I know the instructions say to display an error message about the fact that you haven't logged in
+// I thought it would be more efficient to actually direct the user to the log in page.
   }
 });
 
@@ -74,35 +85,40 @@ app.get("/urls.json", (req, res) => {
 //order matters! below must be defined before :shortURL otherwise
 //Express will think 'new' is a route param
 app.get("/urls/new", (req, res) => {
-    if (users[req.session.user_id]) {
+  if (users[req.session.user_id]) {
     let templateVars = { user: users[req.session.user_id] };
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");
   }
 });
-
+// this is the GET /urls/:id method (at first the assignmend called it :shortURL)
+// Sorry, i ddin't like the inconsistency of using /urls/:id in the instructions
 app.get("/urls/:shortURL", (req, res) => {
   let activeUser = users[req.session.user_id];
   if (!activeUser) {
-    res.send("Please log in!");
+    res.status(404).send("Please log in!");
+  } else if (!urlDatabase[req.params.shortURL]) {
+    res.status(403).send("Invalid shortURL link");
   } else if (urlDatabase[req.params.shortURL].userID === activeUser.id) {
     let templateVars = {
       user: activeUser.id,
       shortURL: req.params.shortURL,
       longURL: urlDatabase[req.params.shortURL].longURL
     };
-    console.log(templateVars);
     res.render("urls_show", templateVars);
   } else {
-    res.send("this is not your URL");
+    res.status(404).send("this is not your URL");
   }
 });
-
+// this is the GET /u/:id method
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
-  console.log(longURL);
-  res.redirect(longURL);
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
+    res.status(404).send("URL for the given ID does not exist");
+  }
 });
 ////////////////////////// POST ////////////////////////////////
 
@@ -127,7 +143,6 @@ app.post("/login", (req, res) => {
   if (existingEmailChecker(req.body.email, users)) {
     if (bcrypt.compareSync(req.body.password, getUserByEmail(req.body.email, users).password)) {
       req.session.user_id = getUserByEmail(req.body.email, users).id;
-
       res.redirect("/urls");
     } else {
       res.status(403).send("403 Password incorrect");
@@ -138,44 +153,46 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  console.log("logout!");
-  req.session = null; //formerly res.clearCookie("session")
+  req.session = null; //Notes: formerly res.clearCookie("session")
   res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
-  console.log("body", req.body);  // Log the POST request body to the console
-  // shortURL-longURL key-value pair are saved to the urlDatabase
-  // responds with a redirection to /urls/:shortURL created
-    if (req.session.user_id) {
+  let activeUser = users[req.session.user_id];
+  if (activeUser) {
     const createdShortURL = generateRandomString(req.body.longURL);
     urlDatabase[createdShortURL] = { longURL: req.body.longURL, userID: req.session.user_id };
-    console.log(urlDatabase);
     res.redirect("/urls/" + createdShortURL);
   } else {
-
+    res.status(404).send("Please log in!");
   }
 });
 
 // Sorry, i ddin't like the inconsistency of using /urls/:id in the instructions
 app.post("/urls/:shortURL", (req, res) => {
-    if (req.session.user_id) {
-    urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.session.user_id };
-    console.log(urlDatabase);
+  let activeUser = users[req.session.user_id];
+  if (!activeUser) {
+    res.status(404).send("Please log in!");
+  } else if (urlDatabase[req.params.shortURL].userID === activeUser.id) {
+    urlDatabase[req.params.shortURL] = {
+      longURL: req.body.longURL,
+      userID: req.session.user_id
+    };
     res.redirect("/urls");
   } else {
-    console.log("Please log in!");
+    res.status(404).send("no URL for you!");
   }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let activeUser = req.session.user_id;
-  if (activeUser && (urlDatabase[req.params.shortURL].userID === activeUser)) {
+  let activeUser = users[req.session.user_id];
+  if (!activeUser) {
+    res.status(404).send("Please log in!");
+  } else if (urlDatabase[req.params.shortURL].userID === activeUser.id) {
     delete urlDatabase[req.params.shortURL];
-    console.log(urlDatabase);
     res.redirect("/urls");
   } else {
-    res.send("Unauthorized!");
+    res.status(404).send("Unauthorized deletion!");
   }
 });
 /////////////////////////// END /////////////////////////////////
