@@ -5,8 +5,8 @@ EJS template language/engine, Express as our NodeJS web app framework, Bootstrap
 
 ## Final Product
 
-![TinyApp Login page screenshot](login-tinyapp.png?raw=true "TinyApp Login")
-![TinyApp URLs page screenshot](/urls-tinyapp.png?raw=true "TinyApp URLs")
+![TinyApp Login page screenshot](./docs/login-tinyapp.png?raw=true "TinyApp Login")
+![TinyApp URLs page screenshot](./docs/urls-tinyapp.png?raw=true "TinyApp URLs")
 
 ## Dependencies
 
