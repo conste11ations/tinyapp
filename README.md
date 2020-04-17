@@ -1,7 +1,7 @@
 # TinyApp Project
 
 TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly).
-EJS template language/engine, Express framework, bcrypt to hash our passwords, body parser middleware to be able to read our req.body, cookie-session as cookie-based session middleware.
+EJS template language/engine, Express as our NodeJS web app framework, Bootstrap as our stylish front-end framework, bcrypt to hash our passwords, body parser middleware to be able to read our req.body, cookie-session as cookie-based session middleware.
 
 ## Final Product
 
